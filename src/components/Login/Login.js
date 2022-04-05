@@ -4,112 +4,105 @@ import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
-/*
-const [state, dispatchFn] = useReducer (reducerFn, initialState, initFn);
+//const reducer = (state, action) => newState
 
-
-state - The state snapshot used in the component re-render/re-evaluation cycle.
- 
-dispatchFn - A function that can be used to dispatch a new action
-             (ex. triggering an update of the state)
- 
-reducerFn - A function that is triggered automatically 
-            once an action is dispatched 
-            (via dispatchFn()) - it receiveds the latest state snapshot and 
-            should return the new, updated state.
- 
-initialState - The initial state
- 
-initFn - A function to set the initial state programmatically.
-*/
-
+// reducers (outside the component function)
 const emailReducer = (state, action) => {
-  if (action.type === 'USER_INPUT') {
-    return { value: action.val, isValid: action.val.includes('@') };
+  if (action.type === 'USER_EMAIL_INPUT') {
+    //             email input, isValid will return true. if there is @ symbol.
+    //                   ↓           ↓
+    return { value: action.val, isValid: action.val.includes('@') }; //
   }
-  if (action.type === 'INPUT_BLUR') {
+  if (action.type === 'INPUT_BLUR_EMAIL') {
+    //          emailState.value,  return true if emailState.value has @ symbol
+    //                 ↓             ↓
     return { value: state.value, isValid: state.value.includes('@') };
   }
   return { value: '', isValid: false };
 };
 
 const passwordReducer = (state, action) => {
-  if (action.type === 'USER_INPUT') {
+  if (action.type === 'USER_PASSWORD_INPUT') {
+    //          password input, isValid will return true. if password is greater than 6 characters.
+    //                   ↓           ↓
     return { value: action.val, isValid: action.val.trim().length > 6 };
   }
-  if (action.type === 'INPUT_BLUR') {
+  if (action.type === 'INPUT_BLUR_PASSWORD') {
+    //        passwordState.value, return true if password greater than 6 characters.
+    //                 ↓             ↓
     return { value: state.value, isValid: state.value.trim().length > 6 };
   }
   return { value: '', isValid: false };
 };
 
+// function component.  received props from App.js { onLogin }  --------------------
 const Login = (props) => {
+  // constants ---------------------
+
   const [formIsValid, setFormIsValid] = useState(false);
 
   const [emailState, dispatchEmail] = useReducer(emailReducer, {
     value: '',
     isValid: null,
   });
-
   const [passwordState, dispatchPassword] = useReducer(passwordReducer, {
     value: '',
     isValid: null,
   });
 
-  //object destructuring
-  /**
-   * This is a very common pattern and approach,
-   * which is why I typically use it and why I show it here (I will keep on using it throughout the course).
-   * just want to point out, that
-   *
-   * the key thing is NOT that we use destructuring
-   * but that we pass specific properties instead of the entire object as a dependency.
-   *
-   *
-   */
-
-  // from emailState we can extract isValid and making alias of it.
-  //name of object: alias
+  // object destructuring with alias.
+  //         value     alias
   const { isValid: emailIsValid } = emailState;
   const { isValid: passwordIsValid } = passwordState;
 
+  // useEffect ---------------------
   useEffect(() => {
-    // debouncing
+    // debouncing - delay the function 500ms
     const identifier = setTimeout(() => {
-      console.log('checking form validity');
-      setFormIsValid(emailIsValid && passwordIsValid);
+      console.log('Checking Form Validity');
+      setFormIsValid(emailIsValid && passwordIsValid); // if both are true, return true.
     }, 500);
-    // clean up
+    // clean up - if not 500ms cleartTimeout
     return () => {
       console.log('CLEAN UP');
       clearTimeout(identifier);
     };
-  }, [emailIsValid, passwordIsValid]);
+  }, [emailIsValid, passwordIsValid]); //emailIsValid, passwordIsValidare ... are dependencies of useEffect here. if one or both updates their state. useEffect triggers.
+  //   ↑               ↑
+  //  alias           alias
 
+  // handler ---------------------
+
+  // email
   const emailChangeHandler = (event) => {
-    dispatchEmail({ type: 'USER_INPUT', val: event.target.value });
-
-    // setFormIsValid(event.target.value.includes('@') && passwordState.isValid);
+    dispatchEmail({ type: 'USER_EMAIL_INPUT', val: event.target.value });
   };
 
-  const passwordChangeHandler = (event) => {
-    dispatchPassword({ type: 'USER_INPUT', val: event.target.value });
-
-    setFormIsValid(emailState.isValid && event.target.value.trim().length > 6);
-  };
-
+  // Every time you get out of focus from the input field, the event will trigger.
   const validateEmailHandler = () => {
-    dispatchEmail({ type: 'INPUT_BLUR' });
+    dispatchEmail({ type: 'INPUT_BLUR_EMAIL' });
+    console.log('blur triggered!');
   };
 
+  // password
+  const passwordChangeHandler = (event) => {
+    dispatchPassword({ type: 'USER_PASSWORD_INPUT', val: event.target.value });
+
+    // setFormIsValid(emailState.isValid && event.target.value.trim().length > 6);
+  };
+
+  // Every time you get out of focus from the input field, the event will trigger.
   const validatePasswordHandler = () => {
-    dispatchPassword({ type: 'INPUT_BLUR' });
+    dispatchPassword({ type: 'INPUT_BLUR_PASSWORD' });
+    console.log('blur triggered!');
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
     props.onLogin(emailState.value, passwordState.value);
   };
+
+  // JSX ---------------------
 
   return (
     <Card className={classes.login}>
